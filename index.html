@@ -14,6 +14,9 @@
 
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw-src.css" integrity="sha512-vJfMKRRm4c4UupyPwGUZI8U651mSzbmmPgR3sdE3LcwBPsdGeARvUM5EcSTg34DK8YIRiIo+oJwNfZPMKEQyug==" crossorigin="anonymous" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" integrity="sha512-ozq8xQKq6urvuU6jNgkfqAmT7jKN2XumbrX1JiB3TnF7tI48DPI4Gy1GXKD/V3EExgAs1V+pRO7vwtS1LHg0Gw==" crossorigin="anonymous"></script>
+    
+        <!-- Used for the GPX plugin for Leaflet -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.5.1/gpx.min.js"></script>
     </head>
 
     <style>
@@ -21,19 +24,41 @@
             padding: 0;
             margin: 0;
         }
+
         html, body, #mapid {
             height: 100%;
             width: 100vw;
+        }
+
+        #delete, #export {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            z-index: 10000;
+            background:white;
+            color:black;
+            padding:6px;
+            border-radius:6px;
+            font-family: 'Helvetica Neue';
+            cursor: pointer;
+            font-size:12px;
+            text-decoration:none;
+        }
+
+        #export {
+            top: 90px;
         }
     </style>
 
 
     <body style="height:100%;">
         <div id ="mapid"></div>
+        <div id='delete'>Delete Features</div>
+        <a href='#' id='export'>Export Features</a>
         
         <script>
             var mymap = L.map('mapid').setView([51.0447, -114.0719], 10);
-            L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(mymap);
 
@@ -43,6 +68,13 @@
             var drawControl = new L.Control.Draw({
                 edit: {
                     featureGroup: drawnItems
+                },
+                draw: {
+                    // having the following as false, hides them from the draw toolbar
+                    polygon: false,
+                    rectangle: false,
+                    circle: false,
+                    circlemarker: false
                 }
             });
             mymap.addControl(drawControl);
@@ -53,6 +85,24 @@
 
                 drawnItems.addLayer(layer);
             });
+
+            // on click, clear all layers
+            document.getElementById('delete').onclick = function(e) {
+                drawnItems.clearLayers();
+            }
+
+            document.getElementById('export').onclick = function(e) {
+                // Extract GeoJson from drawnItems
+                var data = drawnItems.toGeoJSON();
+
+                // Stringify the GeoJson
+                var convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data));
+
+                // Create export
+                document.getElementById('export').setAttribute('href', 'data:' + convertedData);
+                document.getElementById('export').setAttribute('download','data.geojson');
+            }
+
         </script>
     </body>
 </html>
